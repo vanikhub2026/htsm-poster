@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTSM Poster Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            min-height: 100vh;
+        }
+        /* Passcode Gate */
+        #passcode-gate {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        #passcode-gate .gate-box {
+            background: #16213e;
+            border: 1px solid #0f3460;
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+        #passcode-gate .gate-box h1 {
+            color: #f4a261;
+            font-size: 1.5em;
+            margin-bottom: 5px;
+        }
+        #passcode-gate .gate-box .gate-subtitle {
+            color: #aaa;
+            font-size: 0.85em;
+            margin-bottom: 25px;
+        }
+        #passcode-gate .gate-box input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #0f3460;
+            border-radius: 8px;
+            background: #1a1a2e;
+            color: #eee;
+            font-size: 1em;
+            text-align: center;
+            letter-spacing: 3px;
+            margin-bottom: 15px;
+        }
+        #passcode-gate .gate-box input:focus {
+            outline: none;
+            border-color: #f4a261;
+        }
+        #passcode-gate .gate-box button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #f4a261, #e76f51);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        #passcode-gate .gate-box button:hover { opacity: 0.9; }
+        #passcode-gate .gate-error {
+            color: #e63946;
+            font-size: 0.85em;
+            margin-top: 10px;
+            display: none;
+        }
+        #main-app { display: none; }
+        #main-app.visible { display: block !important; }
+        #passcode-gate.hidden { display: none !important; }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #f4a261;
+            margin-bottom: 5px;
+            font-size: 1.8em;
+        }
+        .subtitle {
+            text-align: center;
+            color: #aaa;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+        }
+        .form-section {
+            background: #16213e;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid #0f3460;
+        }
+        .form-section h2 {
+            color: #f4a261;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            border-bottom: 1px solid #0f3460;
+            padding-bottom: 8px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #ccc;
+            font-size: 0.9em;
+        }
+        input[type="text"], input[type="date"], input[type="time"], textarea, select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #0f3460;
+            border-radius: 8px;
+            background: #1a1a2e;
+            color: #eee;
+            font-size: 0.95em;
+            margin-bottom: 15px;
+        }
+        textarea { resize: vertical; min-height: 60px; }
+        .row { display: flex; gap: 15px; }
+        .row > div { flex: 1; }
+        .food-item {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            background: #1a1a2e;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #0f3460;
+        }
+        .food-item input[type="text"] { flex: 1; margin-bottom: 0; }
+        .food-item input[type="file"] { width: 200px; color: #aaa; font-size: 0.8em; }
+        .food-item .preview { width: 50px; height: 50px; border-radius: 6px; object-fit: cover; display: none; }
+        .food-item .remove-btn {
+            background: #e63946;
+            border: none;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1em;
+        }
+        .add-btn {
+            background: #0f3460;
+            border: 1px solid #f4a261;
+            color: #f4a261;
+            padding: 8px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+        .add-btn:hover { background: #f4a261; color: #1a1a2e; }
+        .theme-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+        }
+        .theme-card {
+            padding: 15px 10px;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.3s;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+        .theme-card.selected { border-color: #f4a261; transform: scale(1.05); }
+        .theme-card:hover { transform: scale(1.03); }
+        .theme-saffron { background: linear-gradient(135deg, #ff6b35, #f7c948); color: #3d0c02; }
+        .theme-maroon { background: linear-gradient(135deg, #6b0f1a, #b91c1c); color: #fde68a; }
+        .theme-green { background: linear-gradient(135deg, #2d6a4f, #95d5b2); color: #1b4332; }
+        .theme-royal { background: linear-gradient(135deg, #1e3a5f, #d4af37); color: #fff; }
+        .theme-earthy { background: linear-gradient(135deg, #5c3d2e, #d4a373); color: #fff8e7; }
+        .generate-btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #f4a261, #e76f51);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 1.1em;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .generate-btn:hover { opacity: 0.9; }
+        .download-btn {
+            display: none;
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #2d6a4f, #40916c);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 1.1em;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .download-btn:hover { opacity: 0.9; }
+        #poster-preview {
+            margin-top: 30px;
+            display: none;
+            text-align: center;
+        }
+        #poster-preview h2 { color: #f4a261; margin-bottom: 15px; }
+        #poster-container {
+            width: 600px;
+            margin: 0 auto;
+            border-radius: 5px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        /* Poster internal styles */
+        .poster {
+            width: 600px;
+            padding: 0;
+            position: relative;
+            overflow: hidden;
+            font-family: 'Georgia', serif;
+        }
+        .poster .header-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 15px;
+            background: rgba(0,0,0,0.35);
+            gap: 0;
+        }
+        .poster .header-bar .header-left {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .poster .header-bar .temple-name {
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            line-height: 1.3;
+        }
+        .poster .header-bar .temple-address {
+            font-size: 10px;
+            opacity: 0.9;
+            margin-top: 2px;
+        }
+        .poster .header-bar .header-logo {
+            width: 55px;
+            height: 55px;
+            object-fit: contain;
+            flex-shrink: 0;
+        }
+        .poster .decorative-border {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+        }
+        .poster .content {
+            padding: 25px 30px;
+            position: relative;
+            z-index: 1;
+        }
+        .poster .event-title {
+            text-align: center;
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .poster .event-subtitle {
+            text-align: center;
+            font-size: 16px;
+            margin-bottom: 15px;
+            font-style: italic;
+            opacity: 0.9;
+        }
+        .poster .tagline {
+            text-align: center;
+            font-size: 14px;
+            font-style: italic;
+            margin-bottom: 20px;
+            padding: 0 20px;
+            line-height: 1.5;
+            opacity: 0.9;
+        }
+        .poster .event-datetime {
+            text-align: center;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 25px;
+            padding: 10px;
+            border-radius: 8px;
+            background: rgba(0,0,0,0.15);
+        }
+        .poster .food-grid {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 20px;
+            justify-items: center;
+        }
+        .poster .food-card {
+            text-align: center;
+        }
+        .poster .food-card img {
+            width: 140px;
+            height: 110px;
+            object-fit: cover;
+            border-radius: 10px;
+            border: 3px solid rgba(255,255,255,0.3);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .poster .food-card .food-name {
+            margin-top: 6px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+        .poster .extra-info {
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+            margin: 15px 0;
+            padding: 10px;
+            border-radius: 8px;
+            background: rgba(0,0,0,0.15);
+        }
+        .poster .footer-message {
+            text-align: center;
+            font-size: 14px;
+            font-style: italic;
+            margin-top: 20px;
+            padding: 15px;
+            line-height: 1.6;
+            border-top: 1px solid rgba(255,255,255,0.2);
+            opacity: 0.9;
+        }
+        .poster .om-symbol {
+            text-align: center;
+            font-size: 28px;
+            margin: 10px 0;
+            opacity: 0.6;
+        }
+        /* Corner decorations */
+        .poster .corner-decor {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            opacity: 0.3;
+        }
+        .poster .corner-decor.tl { top: 70px; left: 10px; }
+        .poster .corner-decor.tr { top: 70px; right: 10px; transform: scaleX(-1); }
+        .poster .corner-decor.bl { bottom: 10px; left: 10px; transform: scaleY(-1); }
+        .poster .corner-decor.br { bottom: 10px; right: 10px; transform: scale(-1,-1); }
+        @media (max-width: 700px) {
+            #poster-container { width: 100%; }
+            .poster { width: 100%; }
+            .container { padding: 15px 10px; }
+            h1 { font-size: 1.4em; }
+            .form-section { padding: 15px; }
+            .row { flex-direction: column; gap: 0; }
+            .food-item {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            .food-item input[type="text"] { width: 100%; flex: none; }
+            .food-item input[type="file"] { width: 100%; }
+            .theme-options {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+            .theme-card { padding: 12px 8px; font-size: 0.8em; }
+            .poster .event-title { font-size: 22px; }
+            .poster .event-datetime { font-size: 16px; }
+            .poster .content { padding: 15px; }
+            .poster .food-grid { gap: 10px; }
+            .poster .food-card img {
+                width: 100px;
+                height: 80px;
+            }
+            .poster .food-card .food-name { font-size: 11px; }
+            .poster .header-bar { padding: 8px 10px; }
+            .poster .header-bar .temple-name { font-size: 11px; }
+            .poster .header-bar .temple-address { font-size: 8px; }
+            .poster .header-bar .header-logo { width: 40px; height: 40px; }
+            .poster .tagline { font-size: 11px; padding: 0 5px; }
+            .poster .footer-message { font-size: 11px; padding: 10px; }
+            .poster .extra-info { font-size: 12px; }
+            .poster .corner-decor { width: 30px; height: 30px; font-size: 20px !important; }
+            .poster .om-symbol { font-size: 20px; }
+            #passcode-gate .gate-box { padding: 25px 20px; }
+        }
+
+        @media (min-width: 701px) and (max-width: 1024px) {
+            #poster-container { width: 100%; }
+            .poster { width: 100%; }
+            .container { max-width: 700px; }
+            .theme-options {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .food-item input[type="file"] { width: 180px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Passcode Gate -->
+    <div id="passcode-gate">
+        <div class="gate-box">
+            <h1>🙏 HTSM Poster Generator</h1>
+            <p class="gate-subtitle">Enter the access code to continue</p>
+            <input type="password" id="passcodeInput" placeholder="••••••" onkeydown="if(event.key==='Enter')checkPasscode()">
+            <button onclick="checkPasscode()">Enter</button>
+            <p class="gate-error" id="gateError">Incorrect passcode. Try again.</p>
+        </div>
+    </div>
+
+    <!-- Main App (hidden until passcode is correct) -->
+    <div id="main-app">
+    <div class="container">
+        <h1>🙏 HTSM Poster Generator</h1>
+        <p class="subtitle">Hindu Temple Society of Mississippi — Annapurna Food Stall Posters</p>
+
+        <!-- Temple Logo -->
+        <div class="form-section">
+            <h2>🙏 Temple Logo</h2>
+            <label>Upload HTSM Logo (saved permanently — only need to upload once)</label>
+            <input type="file" id="logoUpload" accept="image/*" onchange="previewLogo(this)">
+            <div style="display:flex; align-items:center; gap:15px; margin-top:10px;">
+                <img id="logoPreview" src="" alt="" style="width:60px;height:60px;object-fit:contain;display:none;border:2px solid #f4a261;">
+                <span id="logoStatus" style="color:#4ade80;font-size:0.85em;display:none;">✓ Logo saved — will auto-load next time</span>
+                <button id="logoRemoveBtn" onclick="removeSavedLogo()" style="display:none;background:#e63946;border:none;color:white;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:0.8em;">Remove saved logo</button>
+            </div>
+        </div>
+
+        <!-- Event Details -->
+        <div class="form-section">
+            <h2>📅 Event Details</h2>
+            <label>Event Name</label>
+            <select id="eventNameSelect" onchange="handleEventNameChange()">
+                <option value="Annapurna Food Stall">Annapurna Food Stall</option>
+                <option value="Street Food Mela">Street Food Mela</option>
+                <option value="__custom__">+ Add New...</option>
+            </select>
+            <input type="text" id="eventNameCustom" placeholder="Type your custom event name" style="display:none;">
+            
+            <label>Event Subtitle (optional)</label>
+            <input type="text" id="eventSubtitle" placeholder="e.g., HTSM Seva, HTSM Annapoorna Cafeteria presents">
+
+            <div class="row">
+                <div>
+                    <label>Date</label>
+                    <input type="date" id="eventDate">
+                </div>
+                <div>
+                    <label>Start Time</label>
+                    <input type="time" id="startTime" value="11:30">
+                </div>
+                <div>
+                    <label>End Time</label>
+                    <input type="time" id="endTime" value="15:00">
+                </div>
+            </div>
+
+            <label>Extra Info (optional — preorder number, beverages, etc.)</label>
+            <textarea id="extraInfo" placeholder="e.g., Coffee, Tea and Kulfi available&#10;For preorders call: 601-212-1363&#10;Bring your own boxes for to-go"></textarea>
+        </div>
+
+        <!-- Food Items -->
+        <div class="form-section">
+            <h2>🍛 Food Items (up to 10)</h2>
+            <div id="foodItemsList">
+                <div class="food-item">
+                    <input type="text" placeholder="Food name (e.g., Chole Bhature)">
+                    <input type="file" accept="image/*" onchange="previewImage(this)">
+                    <img class="preview" src="" alt="">
+                    <button class="remove-btn" onclick="removeFood(this)">×</button>
+                </div>
+            </div>
+            <button class="add-btn" onclick="addFoodItem()">+ Add Food Item</button>
+        </div>
+
+        <!-- Theme Selection -->
+        <div class="form-section">
+            <h2>🎨 Choose Theme</h2>
+            <div class="theme-options">
+                <div class="theme-card theme-saffron selected" onclick="selectTheme(this, 'saffron')">
+                    🕉️ Saffron & Gold
+                </div>
+                <div class="theme-card theme-maroon" onclick="selectTheme(this, 'maroon')">
+                    🪔 Deep Maroon
+                </div>
+                <div class="theme-card theme-green" onclick="selectTheme(this, 'green')">
+                    🌿 Festive Green
+                </div>
+                <div class="theme-card theme-royal" onclick="selectTheme(this, 'royal')">
+                    👑 Royal Blue & Gold
+                </div>
+                <div class="theme-card theme-earthy" onclick="selectTheme(this, 'earthy')">
+                    🏛️ Earthy Temple
+                </div>
+            </div>
+        </div>
+
+        <!-- Generate Button -->
+        <button class="generate-btn" onclick="generatePoster()">🙏 Generate Poster</button>
+        <button class="download-btn" id="downloadBtn" onclick="downloadPoster()">⬇️ Download as PNG</button>
+
+        <!-- Poster Preview -->
+        <div id="poster-preview">
+            <h2>Poster Preview</h2>
+            <div id="poster-container"></div>
+        </div>
+    </div><!-- end container -->
+    </div><!-- end main-app -->
+
+    <script>
+        // ============ PASSCODE CONFIG ============
+        // Change this passcode to whatever your team decides
+        const ACCESS_PASSCODE = 'htsm2026';
+        // =========================================
+
+        function checkPasscode() {
+            const input = document.getElementById('passcodeInput');
+            const error = document.getElementById('gateError');
+            if (input.value === ACCESS_PASSCODE) {
+                // Hide gate, show app using className toggle
+                document.getElementById('passcode-gate').className = 'hidden';
+                document.getElementById('main-app').className = 'visible';
+            } else {
+                error.style.display = 'block';
+                input.value = '';
+                input.focus();
+            }
+        }
+    </script>
+
+    <script>
+        function previewLogo(input) {
+            const preview = document.getElementById('logoPreview');
+            const status = document.getElementById('logoStatus');
+            const removeBtn = document.getElementById('logoRemoveBtn');
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                    status.style.display = 'inline';
+                    removeBtn.style.display = 'inline-block';
+                    // Save to localStorage permanently
+                    localStorage.setItem('htsm_logo', e.target.result);
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function removeSavedLogo() {
+            localStorage.removeItem('htsm_logo');
+            document.getElementById('logoPreview').style.display = 'none';
+            document.getElementById('logoPreview').src = '';
+            document.getElementById('logoStatus').style.display = 'none';
+            document.getElementById('logoRemoveBtn').style.display = 'none';
+            document.getElementById('logoUpload').value = '';
+        }
+
+        function loadSavedLogo() {
+            const saved = localStorage.getItem('htsm_logo');
+            if (saved) {
+                const preview = document.getElementById('logoPreview');
+                preview.src = saved;
+                preview.style.display = 'block';
+                document.getElementById('logoStatus').style.display = 'inline';
+                document.getElementById('logoRemoveBtn').style.display = 'inline-block';
+            }
+        }
+
+        // Load saved logo on page load
+        window.addEventListener('DOMContentLoaded', loadSavedLogo);
+
+        function handleEventNameChange() {
+            const select = document.getElementById('eventNameSelect');
+            const customInput = document.getElementById('eventNameCustom');
+            if (select.value === '__custom__') {
+                customInput.style.display = 'block';
+                customInput.focus();
+            } else {
+                customInput.style.display = 'none';
+                customInput.value = '';
+            }
+        }
+
+        function getGridColumns(count) {
+            if (count === 1) return 1;
+            if (count === 2) return 2;
+            if (count === 3) return 3;
+            if (count === 4) return 2;
+            return 3; // 5+ items → 3 columns
+        }
+
+        function getEventName() {
+            const select = document.getElementById('eventNameSelect');
+            if (select.value === '__custom__') {
+                return document.getElementById('eventNameCustom').value || 'Food Stall';
+            }
+            return select.value;
+        }
+
+        let selectedTheme = 'saffron';
+        let foodCount = 1;
+
+        const themes = {
+            saffron: {
+                background: 'linear-gradient(170deg, #b34700 0%, #ff8c00 40%, #f7c948 100%)',
+                titleColor: '#fff8dc',
+                textColor: '#fff8e1',
+                accentColor: '#ffe082',
+                borderColor: 'rgba(255, 248, 220, 0.4)',
+                cornerSymbol: '❋',
+            },
+            maroon: {
+                background: 'linear-gradient(170deg, #3d0c02 0%, #6b0f1a 30%, #8b1a1a 70%, #5c1a1a 100%)',
+                titleColor: '#fde68a',
+                textColor: '#fef3c7',
+                accentColor: '#f59e0b',
+                borderColor: 'rgba(253, 232, 138, 0.3)',
+                cornerSymbol: '✦',
+            },
+            green: {
+                background: 'linear-gradient(170deg, #1b4332 0%, #2d6a4f 30%, #52b788 70%, #74c69d 100%)',
+                titleColor: '#fff',
+                textColor: '#f0fff0',
+                accentColor: '#ffd700',
+                borderColor: 'rgba(255, 255, 255, 0.3)',
+                cornerSymbol: '❁',
+            },
+            royal: {
+                background: 'linear-gradient(170deg, #0a1628 0%, #1e3a5f 30%, #2c5282 70%, #1a365d 100%)',
+                titleColor: '#d4af37',
+                textColor: '#e2e8f0',
+                accentColor: '#d4af37',
+                borderColor: 'rgba(212, 175, 55, 0.4)',
+                cornerSymbol: '✧',
+            },
+            earthy: {
+                background: 'linear-gradient(170deg, #3e2723 0%, #5c3d2e 30%, #795548 70%, #4e342e 100%)',
+                titleColor: '#ffe0b2',
+                textColor: '#fff8e1',
+                accentColor: '#ffab91',
+                borderColor: 'rgba(255, 224, 178, 0.3)',
+                cornerSymbol: '◈',
+            }
+        };
+
+        function selectTheme(el, theme) {
+            document.querySelectorAll('.theme-card').forEach(c => c.classList.remove('selected'));
+            el.classList.add('selected');
+            selectedTheme = theme;
+        }
+
+        function addFoodItem() {
+            if (foodCount >= 10) { alert('Maximum 10 food items allowed'); return; }
+            foodCount++;
+            const div = document.createElement('div');
+            div.className = 'food-item';
+            div.innerHTML = `
+                <input type="text" placeholder="Food name (e.g., Masala Dosa)">
+                <input type="file" accept="image/*" onchange="previewImage(this)">
+                <img class="preview" src="" alt="">
+                <button class="remove-btn" onclick="removeFood(this)">×</button>
+            `;
+            document.getElementById('foodItemsList').appendChild(div);
+        }
+
+        function removeFood(btn) {
+            if (foodCount <= 1) return;
+            btn.parentElement.remove();
+            foodCount--;
+        }
+
+        function previewImage(input) {
+            const preview = input.nextElementSibling;
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            const date = new Date(dateStr + 'T00:00:00');
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            return date.toLocaleDateString('en-US', options);
+        }
+
+        function formatTime(timeStr) {
+            if (!timeStr) return '';
+            const [h, m] = timeStr.split(':');
+            const hour = parseInt(h);
+            const ampm = hour >= 12 ? 'PM' : 'AM';
+            const h12 = hour % 12 || 12;
+            return `${h12}:${m} ${ampm}`;
+        }
+
+        function generatePoster() {
+            const eventName = getEventName();
+            const eventSubtitle = document.getElementById('eventSubtitle').value;
+            const eventDate = document.getElementById('eventDate').value;
+            const startTime = document.getElementById('startTime').value;
+            const endTime = document.getElementById('endTime').value;
+            const extraInfo = document.getElementById('extraInfo').value;
+
+            const theme = themes[selectedTheme];
+
+            // Gather food items
+            const foodItems = [];
+            document.querySelectorAll('.food-item').forEach(item => {
+                const name = item.querySelector('input[type="text"]').value;
+                const preview = item.querySelector('.preview');
+                if (name || preview.src) {
+                    foodItems.push({ name: name || 'Untitled', image: preview.src || '' });
+                }
+            });
+
+            // Build time string
+            let timeStr = '';
+            if (startTime && endTime) {
+                timeStr = `${formatTime(startTime)} to ${formatTime(endTime)}`;
+            } else if (startTime) {
+                timeStr = `From ${formatTime(startTime)}`;
+            }
+
+            // Build food grid HTML
+            let foodGridHTML = '';
+            foodItems.forEach(item => {
+                foodGridHTML += `
+                    <div class="food-card">
+                        ${item.image ? `<img src="${item.image}" alt="${item.name}">` : `<div style="width:140px;height:110px;background:rgba(255,255,255,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center;margin:0 auto;">🍽️</div>`}
+                        <div class="food-name" style="color:${theme.accentColor}">${item.name}</div>
+                    </div>
+                `;
+            });
+
+            // Extra info
+            let extraHTML = '';
+            if (extraInfo) {
+                const lines = extraInfo.split('\n').map(l => l.trim()).filter(l => l);
+                extraHTML = `<div class="extra-info" style="color:${theme.accentColor}; border: 1px solid ${theme.borderColor};">${lines.join('<br>')}</div>`;
+            }
+
+            // Corner decorations
+            const cs = theme.cornerSymbol;
+            const cornerHTML = `
+                <div class="corner-decor tl" style="font-size:40px;color:${theme.accentColor}">${cs}</div>
+                <div class="corner-decor tr" style="font-size:40px;color:${theme.accentColor}">${cs}</div>
+                <div class="corner-decor bl" style="font-size:40px;color:${theme.accentColor}">${cs}</div>
+                <div class="corner-decor br" style="font-size:40px;color:${theme.accentColor}">${cs}</div>
+            `;
+
+            // Get logo (from preview or localStorage)
+            const logoPreview = document.getElementById('logoPreview');
+            const logoSrc = (logoPreview.src && logoPreview.style.display !== 'none') 
+                ? logoPreview.src 
+                : (localStorage.getItem('htsm_logo') || '');
+            const logoHTML = logoSrc 
+                ? `<img class="header-logo" src="${logoSrc}" alt="HTSM Logo">` 
+                : '';
+
+            // Full poster HTML
+            const posterHTML = `
+                <div class="poster" style="background:${theme.background}; color:${theme.textColor}; border: 4px solid ${theme.borderColor};">
+                    ${cornerHTML}
+                    <!-- Header -->
+                    <div class="header-bar" style="border-bottom: 2px solid ${theme.borderColor};">
+                        <div class="header-left">
+                            <div class="temple-name" style="color:${theme.titleColor}">HINDU TEMPLE SOCIETY OF MISSISSIPPI</div>
+                            <div class="temple-address">173 Vernon Jones Ave, Brandon, MS 39047 | www.htsm.org</div>
+                        </div>
+                        ${logoHTML}
+                    </div>
+                    <!-- Content -->
+                    <div class="content">
+                        <div class="om-symbol" style="color:${theme.accentColor}">☙ 🙏 ❧</div>
+                        ${eventSubtitle ? `<div class="event-subtitle" style="color:${theme.accentColor}">${eventSubtitle}</div>` : ''}
+                        <div class="event-title" style="color:${theme.titleColor}">${eventName}</div>
+                        <div class="tagline" style="color:${theme.textColor}">Every meal you receive here is both nourishment and seva. Your generous purchase sustains our temple, preserves our heritage, and keeps our community spirit thriving.</div>
+                        
+                        <div class="event-datetime" style="color:${theme.accentColor}; border: 1px solid ${theme.borderColor};">
+                            ${formatDate(eventDate)}${timeStr ? '<br>' + timeStr : ''}
+                        </div>
+
+                        ${foodItems.length > 0 ? `<div class="food-grid" style="grid-template-columns: repeat(${getGridColumns(foodItems.length)}, 1fr);">${foodGridHTML}</div>` : ''}
+                        
+                        ${extraHTML}
+
+                        <div class="footer-message" style="border-top-color:${theme.borderColor}; color:${theme.textColor}">
+                            Devotees are invited to enjoy freshly prepared, delicious food,<br>
+                            offered at a very favorable price, served with devotion.
+                        </div>
+                        <div class="om-symbol" style="color:${theme.accentColor}">🙏</div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('poster-container').innerHTML = posterHTML;
+            document.getElementById('poster-preview').style.display = 'block';
+            document.getElementById('downloadBtn').style.display = 'block';
+
+            // Scroll to preview
+            document.getElementById('poster-preview').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function downloadPoster() {
+            const poster = document.querySelector('#poster-container .poster');
+            html2canvas(poster, {
+                scale: 2,
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: null,
+            }).then(canvas => {
+                const link = document.createElement('a');
+                const eventName = getEventName();
+                link.download = `HTSM_${eventName.replace(/\s+/g, '_')}_poster.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        }
+    </script>
+</body>
+</html>
