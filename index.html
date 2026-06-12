@@ -364,8 +364,8 @@
         .poster .corner-decor.bl { bottom: 10px; left: 10px; transform: scaleY(-1); }
         .poster .corner-decor.br { bottom: 10px; right: 10px; transform: scale(-1,-1); }
         @media (max-width: 700px) {
-            #poster-container { width: 100%; }
-            .poster { width: 100%; }
+            #poster-container { width: 600px; overflow-x: auto; }
+            .poster { width: 600px; }
             .container { padding: 15px 10px; }
             h1 { font-size: 1.4em; }
             .form-section { padding: 15px; }
@@ -381,25 +381,8 @@
                 gap: 8px;
             }
             .theme-card { padding: 12px 8px; font-size: 0.8em; }
-            .poster .event-title { font-size: 22px; }
-            .poster .event-datetime { font-size: 16px; }
-            .poster .content { padding: 15px; }
-            .poster .food-grid { gap: 10px; }
-            .poster .food-card img {
-                width: 100px;
-                height: 80px;
-            }
-            .poster .food-card .food-name { font-size: 11px; }
-            .poster .header-bar { padding: 8px 10px; }
-            .poster .header-bar .temple-name { font-size: 11px; }
-            .poster .header-bar .temple-address { font-size: 8px; }
-            .poster .header-bar .header-logo { width: 40px; height: 40px; }
-            .poster .tagline { font-size: 11px; padding: 0 5px; }
-            .poster .footer-message { font-size: 11px; padding: 10px; }
-            .poster .extra-info { font-size: 12px; }
-            .poster .corner-decor { width: 30px; height: 30px; font-size: 20px !important; }
-            .poster .om-symbol { font-size: 20px; }
             #passcode-gate .gate-box { padding: 25px 20px; }
+            #poster-preview { overflow-x: auto; }
         }
 
         @media (min-width: 701px) and (max-width: 1024px) {
